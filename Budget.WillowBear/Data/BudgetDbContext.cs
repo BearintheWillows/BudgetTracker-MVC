@@ -15,7 +15,14 @@ namespace Budget.WillowBear.Data
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
         }
 
-        public DbSet<Transaction>? Transactions { get; set; }
-        public DbSet<Category>? Categories { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<Category> Categories { get; set; }
+
+        //add category
+        public void AddCategory(Category category)
+        {
+            Categories.Add(category);
+            SaveChanges();
+        }
     }
 }
