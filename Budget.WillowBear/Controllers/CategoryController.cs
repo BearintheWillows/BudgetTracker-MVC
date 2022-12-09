@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Budget.WillowBear.Data;
 using Budget.WillowBear.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Budget.WillowBear.Controllers
 {
@@ -23,66 +24,84 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Category
         //
         [HttpGet]
-        public IEnumerable<Category> GetAll()
+        public async Task<IEnumerable<Category>> GetAll()
         {
-            return _context.Categories;
+            var categories = new List<Category>();
+            categories = await _context.Categories.ToListAsync();
+
+            if (!categories.Any())
+            {
+                return categories;
+            }
+
+            return categories;
         }
 
         // GET: api/Category/{id}
         //
-
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public async Task<Category?> GetCategoryById(int id)
         {
-            var category = _context.Categories.FirstOrDefault(c => c.Id == id);
+            // Attempt to find category by id
+            //
+            Category? category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
-            if (category == null)
-            {
-                return NotFound("Category not found");
-            }
-
-            return Ok(category);
-        }
-
-        // POST: api/Category
-        [HttpPost]
-        [Route("create")]
-        public IActionResult Create(Category category)
-        {
-            _context.AddCategory(category);
-            return Ok();
-        }
-
-        // PUT: api/Category/edit/{id}
-        [HttpPut]
-        [Route("edit/{id}")]
-        public IActionResult EditCategory(Category category)
-        {
             // Check if category is null
             //
             if (category == null)
             {
-                return BadRequest("No category provided");
+                Console.WriteLine("Category not found");
+                return null;
             }
 
-            // Check if category id matches route id
+            Console.WriteLine($"category {category!.Id} Retrieved ");
+            return category;
+        }
+
+
+        // POST: /create
+        //
+        [HttpPost]
+        [Route("create")]
+        public async Task<IActionResult> AddCategory(Category category)
+        {
+            await _context.Categories.AddAsync(category);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        // PUT: /update/{id}
+        //
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> UpdateCategory(int id, [FromBody] Category category)
+        {
+
+            // Check if category is null
             //
-            if (category.Id != category.Id)
+            if (category == null)
             {
-                return BadRequest("Category Id mismatch");
+                Console.WriteLine("Category not found");
+                return BadRequest("Category Corrupted");
             }
 
             // Check if category exists
             //
-            if (!_context.Categories.Any(c => c.Id == category.Id))
+            if (!_context.Categories.Any(c => c.Id == id))
             {
-                return NotFound("Category not found");
+                Console.WriteLine("Category not found");
+                return NotFound("Category not found in Database");
             }
+
+            var categoryToUpdate = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+
+            categoryToUpdate.Name = category.Name;
+            categoryToUpdate.Description = category.Description;
+            categoryToUpdate.UpdatedDate = category.UpdatedDate;
 
             try
             {
-                _context.Update(category);
-                _context.SaveChanges();
+
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             catch (Exception e)
@@ -92,23 +111,36 @@ namespace Budget.WillowBear.Controllers
             }
         }
 
+
+        // DELETE: /delete/{id}
+        //
         [HttpDelete]
         [Route("delete/{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> DeleteCategoriesAndTransactions(int id)
         {
-            var category = _context.Categories.FirstOrDefault(c => c.Id == id);
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
             // Check if category exists
             //
             if (category == null)
             {
-                return NotFound("Category not found");
+                Console.WriteLine("Category not found");
+                return NotFound("Category not found in Database");
             }
 
             try
             {
+                // Delete category
                 _context.Categories.Remove(category);
-                _context.SaveChanges();
+
+                // Check if category has any transactions
+                if (_context.Transactions.Any(t => t.CategoryId == category.Id))
+                {
+                    // Delete all transactions associated with category
+                    Console.WriteLine("Deleting transactions");
+                    _context.Transactions.RemoveRange(_context.Transactions.Where(t => t.CategoryId == category.Id));
+                }
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             catch (Exception e)
