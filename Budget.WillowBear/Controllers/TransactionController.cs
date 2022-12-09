@@ -1,6 +1,7 @@
 
 using Budget.WillowBear.Data;
 using Budget.WillowBear.Models;
+using Budget.WillowBear.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,11 +25,13 @@ namespace Budget.WillowBear.Controllers
         {
             List<TransactionDTO> transactions = await _context.Transactions.Include(t => t.Category).Select(t => new TransactionDTO
             {
+                Id = t.Id,
                 TransactionDate = t.TransactionDate,
                 Amount = t.Amount,
                 Notes = t.Notes,
                 Category = new CategoryDTO
                 {
+                    Id = t.Category.Id,
                     Name = t.Category.Name,
                     Description = t.Category.Description,
                 },
@@ -41,11 +44,23 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Transaction/{id}
         //
         [HttpGet("{id}")]
-        [Route("{id}")]
-        public async Task<Transaction?> GetTransactionByIdAsync(int id)
+        public async Task<TransactionDTO?> GetTransactionByIdAsync(int id)
         {
-            // Attempt to find transaction by id
-            Transaction? transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == id);
+            // Attempt to find transaction by id and convert to DTO
+            TransactionDTO? transaction = await _context.Transactions.Where(t => t.Id == id).Include(t => t.Category).Select(t => new TransactionDTO
+            {
+                Id = t.Id,
+                TransactionDate = t.TransactionDate,
+                Amount = t.Amount,
+                Notes = t.Notes,
+                Category = new CategoryDTO
+                {
+                    Id = t.Category.Id,
+                    Name = t.Category.Name,
+                    Description = t.Category.Description,
+                },
+                TransactionType = t.TransactionType
+            }).FirstOrDefaultAsync();
 
             // Check if transaction is null
             if (transaction == null)
@@ -54,7 +69,6 @@ namespace Budget.WillowBear.Controllers
                 return null;
             }
 
-            Console.WriteLine($"transaction {transaction!.Id} Retrieved ");
             return transaction;
         }
 
@@ -68,15 +82,17 @@ namespace Budget.WillowBear.Controllers
             {
 
                 // Check if category exists
+                // If it does, set the category to the transaction
+                // If it doesn't, return not found
                 if (_context.Categories.Any(c => c.Id == transaction.CategoryId))
                 {
                     transaction.Category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == transaction.CategoryId);
                 }
                 else
                 {
-                    return BadRequest("Category not found");
+                    return NotFound("Category not found");
                 }
-                Console.WriteLine($"{transaction}");
+
 
                 await _context.Transactions.AddAsync(transaction);
                 await _context.SaveChangesAsync();
@@ -89,19 +105,43 @@ namespace Budget.WillowBear.Controllers
             }
         }
 
-        // PUT: /edit
+        // PUT: /edit/{id}
         //
-        [HttpPut("edit/{id}")]
-        public async Task<ActionResult> Edit(int id, [FromBody] Transaction transaction)
+        [HttpPut("update/{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Transaction transaction)
         {
 
+            // Check if category exists
+            // If it does, set the category to the transaction
+            // If it doesn't, return not found
+            if (!_context.Categories.Any(c => c.Id == transaction.CategoryId))
+            {
+                return NotFound("Category not found");
+            }
+            else
+            {
+                transaction.Category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == transaction.CategoryId);
+
+            }
+
+            // Retrieve transaction from database
+            var toBeUpdated = _context.Transactions.Where(t => t.Id == id).Include(t => t.Category).FirstOrDefaultAsync();
+
             // Check if transaction exists
-            if (!_context.Transactions.Any(t => t.Id == id))
+            // If it does, update the transaction
+            // If it doesn't, return not found
+            if (toBeUpdated == null)
             {
                 return NotFound("Transaction not found");
             }
-
-            _context.Transactions.Update(transaction);
+            else
+            {
+                toBeUpdated.Result.TransactionDate = transaction.TransactionDate;
+                toBeUpdated.Result.Amount = transaction.Amount;
+                toBeUpdated.Result.Notes = transaction.Notes;
+                toBeUpdated.Result.Category = transaction.Category;
+                toBeUpdated.Result.TransactionType = transaction.TransactionType;
+            }
 
             try
             {
@@ -118,13 +158,11 @@ namespace Budget.WillowBear.Controllers
         // DELETE: /delete{id}
         //
         [HttpDelete("delete/{id}")]
-
         public async Task<IActionResult> DeleteTransaction(int id)
         {
             var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == id);
 
             // Check if transaction exists
-            //
             if (transaction == null)
             {
                 return NotFound("Transaction not found");
@@ -132,7 +170,6 @@ namespace Budget.WillowBear.Controllers
 
             try
             {
-                Console.WriteLine("Deleting transaction");
                 _context.Transactions.Remove(transaction);
                 await _context.SaveChangesAsync();
                 return Ok();
