@@ -28,6 +28,22 @@ namespace Budget.WillowBear.Controllers
             return _context.Categories;
         }
 
+        // GET: api/Category/{id}
+        //
+
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            var category = _context.Categories.FirstOrDefault(c => c.Id == id);
+
+            if (category == null)
+            {
+                return NotFound("Category not found");
+            }
+
+            return Ok(category);
+        }
+
         // POST: api/Category
         [HttpPost]
         [Route("create")]
@@ -76,7 +92,8 @@ namespace Budget.WillowBear.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
+        [HttpDelete]
+        [Route("delete/{id}")]
         public IActionResult Delete(int id)
         {
             var category = _context.Categories.FirstOrDefault(c => c.Id == id);
