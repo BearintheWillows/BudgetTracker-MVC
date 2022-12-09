@@ -18,45 +18,5 @@ namespace Budget.WillowBear.Data
 
         public virtual DbSet<Transaction> Transactions { get; set; }
         public virtual DbSet<Category> Categories { get; set; }
-
-
-        // CATEGORY METHODS //
-
-        // TRANSACTION METHODS //
-
-
-
-
-
-
-
-
-        // DELETE
-        //
-        public bool DeleteTransaction(int id)
-        {
-            var transaction = Transactions.FirstOrDefault(t => t.Id == id);
-
-            // Check if transaction exists
-            //
-            if (transaction == null)
-            {
-                Console.WriteLine("Transaction not found");
-                return false;
-            }
-
-            try
-            {
-                Console.WriteLine("Deleting transaction");
-                Transactions.Remove(transaction);
-                Console.WriteLine("Transaction deleted");
-                return true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                return false;
-            }
-        }
     }
 }

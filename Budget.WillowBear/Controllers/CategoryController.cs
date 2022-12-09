@@ -134,11 +134,11 @@ namespace Budget.WillowBear.Controllers
                 _context.Categories.Remove(category);
 
                 // Check if category has any transactions
-                if (_context.Transactions.Any(t => t.CategoryId == category.Id))
+                if (_context.Transactions.Any(t => t.Category.Id == category.Id))
                 {
                     // Delete all transactions associated with category
                     Console.WriteLine("Deleting transactions");
-                    _context.Transactions.RemoveRange(_context.Transactions.Where(t => t.CategoryId == category.Id));
+                    _context.Transactions.RemoveRange(_context.Transactions.Where(t => t.Category.Id == category.Id));
                 }
                 await _context.SaveChangesAsync();
                 return Ok();

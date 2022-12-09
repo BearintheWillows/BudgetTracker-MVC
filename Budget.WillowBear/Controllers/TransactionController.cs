@@ -20,10 +20,20 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Transaction
         //
         [HttpGet]
-        public async Task<IEnumerable<Transaction>> GetAllTransactions()
+        public async Task<IEnumerable<TransactionDTO>> GetAll()
         {
-            var transactions = new List<Transaction>();
-            transactions = await _context.Transactions.ToListAsync();
+            List<TransactionDTO> transactions = await _context.Transactions.Include(t => t.Category).Select(t => new TransactionDTO
+            {
+                TransactionDate = t.TransactionDate,
+                Amount = t.Amount,
+                Notes = t.Notes,
+                Category = new CategoryDTO
+                {
+                    Name = t.Category.Name,
+                    Description = t.Category.Description,
+                },
+                TransactionType = t.TransactionType
+            }).ToListAsync();
 
             return transactions;
         }
@@ -31,6 +41,7 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Transaction/{id}
         //
         [HttpGet("{id}")]
+        [Route("{id}")]
         public async Task<Transaction?> GetTransactionByIdAsync(int id)
         {
             // Attempt to find transaction by id
@@ -49,11 +60,25 @@ namespace Budget.WillowBear.Controllers
 
         // POST: /create
         //
+        [HttpPost]
+        [Route("create")]
         public async Task<IActionResult> AddTransaction(Transaction transaction)
         {
             try
             {
-                _context.Transactions.AddAsync(transaction);
+
+                // Check if category exists
+                if (_context.Categories.Any(c => c.Id == transaction.CategoryId))
+                {
+                    transaction.Category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == transaction.CategoryId);
+                }
+                else
+                {
+                    return BadRequest("Category not found");
+                }
+                Console.WriteLine($"{transaction}");
+
+                await _context.Transactions.AddAsync(transaction);
                 await _context.SaveChangesAsync();
                 return Ok();
             }
@@ -66,9 +91,8 @@ namespace Budget.WillowBear.Controllers
 
         // PUT: /edit
         //
-        [HttpPut]
-        [Route("edit/{id}")]
-        public async Task<IActionResult> EditTransaction(Transaction transaction, int id)
+        [HttpPut("edit/{id}")]
+        public async Task<ActionResult> Edit(int id, [FromBody] Transaction transaction)
         {
 
             // Check if transaction exists
@@ -77,23 +101,24 @@ namespace Budget.WillowBear.Controllers
                 return NotFound("Transaction not found");
             }
 
+            _context.Transactions.Update(transaction);
+
             try
             {
-                _context.Entry(transaction).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
                 return Ok();
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                return BadRequest("Transaction not updated");
+
+                return BadRequest("Transaction not updated - " + e.Message);
             }
         }
 
         // DELETE: /delete{id}
         //
-        [HttpDelete("{id}")]
-        [Route("delete/{id}")]
+        [HttpDelete("delete/{id}")]
+
         public async Task<IActionResult> DeleteTransaction(int id)
         {
             var transaction = await _context.Transactions.FirstOrDefaultAsync(t => t.Id == id);
