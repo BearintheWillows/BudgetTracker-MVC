@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Budget.WillowBear.Data;
 using Budget.WillowBear.Models;
+using Budget.WillowBear.Models.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,15 +25,15 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Category
         //
         [HttpGet]
-        public async Task<IEnumerable<Category>> GetAll()
+        public async Task<IEnumerable<CategoryDTO>> GetAll()
         {
-            var categories = new List<Category>();
-            categories = await _context.Categories.ToListAsync();
-
-            if (!categories.Any())
+            // Attempt to find all categories and convert to DTO
+            List<CategoryDTO> categories = await _context.Categories.Select(c => new CategoryDTO
             {
-                return categories;
-            }
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+            }).ToListAsync();
 
             return categories;
         }
@@ -40,21 +41,22 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Category/{id}
         //
         [HttpGet("{id}")]
-        public async Task<Category?> GetCategoryById(int id)
+        public async Task<ActionResult<CategoryDTO?>> GetCategoryById(int id)
         {
-            // Attempt to find category by id
-            //
-            Category? category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
+            // Attempt to find category by id and convert to DTO
+            CategoryDTO? category = await _context.Categories.Where(c => c.Id == id).Select(c => new CategoryDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+            }).FirstOrDefaultAsync();
 
             // Check if category is null
-            //
             if (category == null)
             {
-                Console.WriteLine("Category not found");
-                return null;
+                return NotFound("Category not found in Database");
             }
 
-            Console.WriteLine($"category {category!.Id} Retrieved ");
             return category;
         }
 
@@ -77,30 +79,26 @@ namespace Budget.WillowBear.Controllers
         {
 
             // Check if category is null
-            //
             if (category == null)
             {
-                Console.WriteLine("Category not found");
                 return BadRequest("Category Corrupted");
             }
 
             // Check if category exists
-            //
             if (!_context.Categories.Any(c => c.Id == id))
             {
-                Console.WriteLine("Category not found");
                 return NotFound("Category not found in Database");
             }
 
+            // Retrieve category from database
             var categoryToUpdate = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
             categoryToUpdate.Name = category.Name;
             categoryToUpdate.Description = category.Description;
-            categoryToUpdate.UpdatedDate = category.UpdatedDate;
+            categoryToUpdate.UpdatedDate = DateTime.Now;
 
             try
             {
-
                 await _context.SaveChangesAsync();
                 return Ok();
             }
@@ -121,10 +119,8 @@ namespace Budget.WillowBear.Controllers
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
             // Check if category exists
-            //
             if (category == null)
             {
-                Console.WriteLine("Category not found");
                 return NotFound("Category not found in Database");
             }
 
@@ -137,7 +133,6 @@ namespace Budget.WillowBear.Controllers
                 if (_context.Transactions.Any(t => t.Category.Id == category.Id))
                 {
                     // Delete all transactions associated with category
-                    Console.WriteLine("Deleting transactions");
                     _context.Transactions.RemoveRange(_context.Transactions.Where(t => t.Category.Id == category.Id));
                 }
                 await _context.SaveChangesAsync();
