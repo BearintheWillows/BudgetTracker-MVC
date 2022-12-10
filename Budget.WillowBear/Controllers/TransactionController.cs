@@ -21,7 +21,7 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Transaction
         //
         [HttpGet]
-        public async Task<IEnumerable<TransactionDTO>> GetAll()
+        public async Task<IEnumerable<TransactionDTO?>> GetAll()
         {
             List<TransactionDTO> transactions = await _context.Transactions.Include(t => t.Category).Select(t => new TransactionDTO
             {
