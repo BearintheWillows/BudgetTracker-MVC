@@ -1,7 +1,6 @@
-class Api {
+export class TransactionApi {
     constructor() {
         this.TransactionsUrl = "api/Transaction";
-        this.CategoriesUrl = "api/Category";
     }
 
     // Transaction API Methods //
@@ -60,6 +59,14 @@ class Api {
         return data;
     }
 
+}
+
+export class CategoryApi {
+    constructor() {
+        this.CategoriesUrl = "api/Category";
+    }
+
+
     // Category API Methods //
 
     // Get all categories
@@ -115,8 +122,4 @@ class Api {
         const data = await response.json();
         return data;
     }
-
-
-
-
 }
