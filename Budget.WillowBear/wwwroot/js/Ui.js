@@ -6,14 +6,37 @@ class Ui {
     }
 
     // Render the categories
-    renderCategories() {
-        let html = "";
-        this.categories.categories.forEach((category) => {
-            html += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                            ${category.name}
-                            <span class="badge badge-primary badge-pill">${category.budgeted}</span>
-                        </li>` ;
+    renderCategoriesTable() {
+        let categories = this.categories.getCategories();
+
+
+        const table = document.getElementById("categories");
+        // Clear the table
+        table.innerHTML = "";
+
+        // Add the table headers
+        table.innerHTML += `
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+            <tr>
+        `;
+
+        console.log("ui.categories = " + this.categories.categories);
+        // Add the table rows
+        categories.forEach(category => {
+            let tr = table.insertRow();
+
+            let td1 = tr.insertCell(0);
+            td1.appendChild(document.createTextNode(category.name));
+
+            let td2 = tr.insertCell(1);
+            td2.appendChild(document.createTextNode(category.description));
         });
-        document.getElementById("categories").innerHTML = html;
+
     }
 }
+
+const ui = new Ui();
+
+ui.renderCategoriesTable();

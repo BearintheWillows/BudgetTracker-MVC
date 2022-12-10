@@ -65,10 +65,6 @@ export class CategoryApi {
     constructor() {
         this.CategoriesUrl = "api/Category";
     }
-
-
-    // Category API Methods //
-
     // Get all categories
     //
     async getCategories() {
@@ -122,4 +118,5 @@ export class CategoryApi {
         const data = await response.json();
         return data;
     }
+
 }

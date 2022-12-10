@@ -1,5 +1,5 @@
-import { CategoryApi as api } from ".Api.js";
-class Categories {
+import { CategoryApi as api } from "./Api.js";
+export class Categories {
     constructor() {
         this.api = new api();
         this.categories = [];
@@ -7,11 +7,15 @@ class Categories {
 
     // Get all categories from the API
     // Update the categories array
-    getCategories() {
-        api.getCategories().then((data) => {
-            this.categories = data;
-            this.renderCategories();
-        });
+    async getCategories() {
+        this.api.getCategories()
+            .then(data => {
+                console.log("categories = " + data.toString());
+                //TDOD: This is not working
+
+            });
+
+        console.log("categories = " + this.categories);
     }
 
     // Gwt a single category from the API
@@ -23,5 +27,3 @@ class Categories {
 
 
 }
-
-export default Categories;
