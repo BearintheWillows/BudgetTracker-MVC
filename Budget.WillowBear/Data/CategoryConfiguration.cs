@@ -11,6 +11,7 @@ namespace Budget.WillowBear.Data
             builder.ToTable("Category");
 
             builder.HasKey(c => c.Id);
+            builder.HasIndex(c => c.Name).IsUnique();
             builder.Property(c => c.Name).IsRequired().HasMaxLength(50);
             builder.Property(c => c.Description).HasMaxLength(200);
             builder.Property(c => c.CreatedDate).IsRequired();

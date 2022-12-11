@@ -60,14 +60,41 @@ namespace Budget.WillowBear.Controllers
             return category;
         }
 
+        [HttpGet("{name}")]
+        public async Task<ActionResult<CategoryDTO?>> GetCategoryByName(string name)
+        {
+            // Attempt to find category by name and convert to DTO
+            CategoryDTO? category = await _context.Categories.Where(c => c.Name == name).Select(c => new CategoryDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+            }).FirstOrDefaultAsync();
+
+            // Check if category is null
+            if (category == null)
+            {
+                return NotFound("Category not found in Database");
+            }
+
+            return category;
+        }
+
 
         // POST: /create
         //
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> AddCategory(Category category)
+        public async Task<IActionResult> AddCategory(CategoryDTO category)
         {
-            await _context.Categories.AddAsync(category);
+            var newCategory = new Category
+            {
+                Name = category.Name,
+                Description = category.Description,
+            };
+
+
+            await _context.Categories.AddAsync(newCategory);
             await _context.SaveChangesAsync();
             return Ok();
         }
