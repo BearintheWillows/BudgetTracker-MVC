@@ -1,4 +1,23 @@
+// Interface to match the Transaction model
+interface ITransaction {
+    id: number;
+    transactionDate: Date;
+    amount: number;
+    notes: string;
+    category: ICategory;
+    transactionType: number;
+}
+
+// Interface to match the Category model
+interface ICategory {
+    id: number;
+    name: string;
+    description: string;
+}
+
 class TransactionApi {
+    readonly TransactionsUrl: string;
+
     constructor() {
         this.TransactionsUrl = "api/Transaction";
     }
@@ -15,7 +34,7 @@ class TransactionApi {
 
     // Get a single transaction
     //
-    async getTransaction(id) {
+    async getTransaction(id: number) {
         const response = await fetch(`${this.TransactionsUrl}/${id}`);
         const data = await response.json();
         return data;
@@ -62,6 +81,8 @@ class TransactionApi {
 }
 
 class CategoryApi {
+    readonly CategoriesUrl: string;
+
     constructor() {
         this.CategoriesUrl = "api/Category";
     }
