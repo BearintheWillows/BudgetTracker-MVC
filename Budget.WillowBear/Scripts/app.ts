@@ -27,7 +27,7 @@ class CategoryDataAccess {
 
     //Get by Id
     async getById(id: number): Promise<ICategory> {
-        const response = await fetch(`${this.baseUrl}/id/${id}`);
+        const response = await fetch(`${this.baseUrl}/${id}`);
         const data = await response.json();
         return data;
     }
