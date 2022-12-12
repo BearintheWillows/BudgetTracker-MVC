@@ -5,7 +5,7 @@ interface ITransaction {
     amount: number;
     notes: string;
     categoryId: number;
-    category: ICategory;
+    category: ICategory | null;
     transactionType: number;
 }
 
@@ -21,10 +21,10 @@ class CategoryDataAccess {
     constructor() {
     }
 
-
-
+    //Initialise Properties
     categories: ICategory[] = [];
     readonly baseUrl: string = '/api/category';
+
     //Get all categories
     async getAll(): Promise<ICategory[]> {
         const response = await fetch(this.baseUrl);
@@ -105,6 +105,90 @@ class CategoryDataAccess {
 }
 
 class Transaction {
-    //TODO: Implement Transaction class
+    constructor() { }
+
+    //Initialise Properties
+    transactions: ITransaction[] = [];
+    readonly baseUrl: string = '/api/transaction';
+
+    //Get all transactions
+    async getAll(): Promise<ITransaction[]> {
+        const response = await fetch(this.baseUrl);
+        const data = await response.json();
+        this.transactions = data;
+        return data;
+    }
+
+    //Get by Id
+    async getById(id: number): Promise<ITransaction> {
+        const response = await fetch(`${this.baseUrl}/${id}`);
+        const data = await response.json();
+
+        if (response.ok) {
+            console.log("Transaction found");
+            return data
+        } else {
+            console.log("Transaction not found");
+            return null;
+        }
+    }
+
+    //Create Transaction
+    async create(transaction: ITransaction): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/create`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(transaction)
+        });
+        //check if response is ok
+        if (response.ok) {
+            console.log("Transaction created");
+            await this.getAll();
+        } else {
+            console.log("Transaction not created");
+        }
+    }
+
+    //Update Transaction
+    async update(transaction: ITransaction): Promise<void> {
+
+        //TODO: FIX THIS
+        const response = await fetch(`${this.baseUrl}/update/${transaction.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(transaction)
+        });
+
+        // check if response is ok
+        if (response.ok) {
+            console.log("Transaction updated");
+            await this.getAll();
+        } else {
+            console.log("Transaction not updated");
+        }
+    }
 }
 
+
+let transaction = new Transaction();
+
+transaction.getAll().then(data => {
+    console.log(data);
+});
+
+let newTransaction: ITransaction = {
+    id: 1, //id is 0 because it is a new transaction
+    transactionDate: new Date(),
+    amount: 100,
+    notes: "test",
+    categoryId: 3,
+    category: null,
+    transactionType: 1
+}
+
+transaction.create(newTransaction);
+transaction.update(newTransaction);
