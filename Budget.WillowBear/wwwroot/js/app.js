@@ -100,11 +100,9 @@ class CategoryDataAccess {
 }
 class Transaction {
     constructor() {
-        //Initialise Properties
         this.transactions = [];
         this.baseUrl = '/api/transaction';
     }
-    //Get all transactions
     getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield fetch(this.baseUrl);
@@ -113,7 +111,6 @@ class Transaction {
             return data;
         });
     }
-    //Get by Id
     getById(id) {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield fetch(`${this.baseUrl}/${id}`);
@@ -128,7 +125,6 @@ class Transaction {
             }
         });
     }
-    //Create Transaction
     create(transaction) {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield fetch(`${this.baseUrl}/create`, {
@@ -138,7 +134,6 @@ class Transaction {
                 },
                 body: JSON.stringify(transaction)
             });
-            //check if response is ok
             if (response.ok) {
                 console.log("Transaction created");
                 yield this.getAll();
@@ -148,7 +143,6 @@ class Transaction {
             }
         });
     }
-    //Update Transaction
     update(transaction) {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield fetch(`${this.baseUrl}/update/${transaction.id}`, {
@@ -158,7 +152,7 @@ class Transaction {
                 },
                 body: JSON.stringify(transaction)
             });
-            // check if response is ok
+            ;
             if (response.ok) {
                 console.log("Transaction updated");
                 yield this.getAll();
@@ -168,20 +162,24 @@ class Transaction {
             }
         });
     }
+    delete(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield fetch(`${this.baseUrl}/delete/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                console.log("Transaction deleted");
+                yield this.getAll();
+            }
+            else {
+                console.log("Transaction not deleted");
+            }
+        });
+    }
 }
 let transaction = new Transaction();
+transaction.delete(1);
 transaction.getAll().then(data => {
     console.log(data);
 });
-let newTransaction = {
-    id: 1,
-    transactionDate: new Date(),
-    amount: 100,
-    notes: "test",
-    categoryId: 3,
-    category: null,
-    transactionType: 1
-};
-transaction.create(newTransaction);
-transaction.update(newTransaction);
 //# sourceMappingURL=app.js.map

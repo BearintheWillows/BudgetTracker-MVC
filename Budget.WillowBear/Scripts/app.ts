@@ -107,11 +107,9 @@ class CategoryDataAccess {
 class Transaction {
     constructor() { }
 
-    //Initialise Properties
     transactions: ITransaction[] = [];
     readonly baseUrl: string = '/api/transaction';
 
-    //Get all transactions
     async getAll(): Promise<ITransaction[]> {
         const response = await fetch(this.baseUrl);
         const data = await response.json();
@@ -119,7 +117,6 @@ class Transaction {
         return data;
     }
 
-    //Get by Id
     async getById(id: number): Promise<ITransaction> {
         const response = await fetch(`${this.baseUrl}/${id}`);
         const data = await response.json();
@@ -133,7 +130,6 @@ class Transaction {
         }
     }
 
-    //Create Transaction
     async create(transaction: ITransaction): Promise<void> {
         const response = await fetch(`${this.baseUrl}/create`, {
             method: 'POST',
@@ -142,7 +138,7 @@ class Transaction {
             },
             body: JSON.stringify(transaction)
         });
-        //check if response is ok
+
         if (response.ok) {
             console.log("Transaction created");
             await this.getAll();
@@ -151,19 +147,16 @@ class Transaction {
         }
     }
 
-    //Update Transaction
     async update(transaction: ITransaction): Promise<void> {
 
-        //TODO: FIX THIS
         const response = await fetch(`${this.baseUrl}/update/${transaction.id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(transaction)
-        });
+        });;
 
-        // check if response is ok
         if (response.ok) {
             console.log("Transaction updated");
             await this.getAll();
@@ -171,24 +164,18 @@ class Transaction {
             console.log("Transaction not updated");
         }
     }
+
+    async delete(id: number): Promise<void> {
+        const response = await fetch(`${this.baseUrl}/delete/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            console.log("Transaction deleted");
+            await this.getAll();
+        } else {
+            console.log("Transaction not deleted");
+        }
+    }
 }
 
-
-let transaction = new Transaction();
-
-transaction.getAll().then(data => {
-    console.log(data);
-});
-
-let newTransaction: ITransaction = {
-    id: 1, //id is 0 because it is a new transaction
-    transactionDate: new Date(),
-    amount: 100,
-    notes: "test",
-    categoryId: 3,
-    category: null,
-    transactionType: 1
-}
-
-transaction.create(newTransaction);
-transaction.update(newTransaction);
