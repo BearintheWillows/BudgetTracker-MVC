@@ -14,12 +14,17 @@ class CategoryDataAccess {
         this.categories = [];
         this.baseUrl = '/api/category';
     }
+    initArray() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield (yield this.getAll()).forEach(x => this.categories.push(x));
+            return this.categories;
+        });
+    }
     //Get all categories
     getAll() {
         return __awaiter(this, void 0, void 0, function* () {
             const response = yield fetch(this.baseUrl);
             const data = yield response.json();
-            this.categories = data;
             return data;
         });
     }
@@ -98,7 +103,7 @@ class CategoryDataAccess {
         });
     }
 }
-class Transaction {
+class TransactionDataAccess {
     constructor() {
         this.transactions = [];
         this.baseUrl = '/api/transaction';
@@ -177,9 +182,29 @@ class Transaction {
         });
     }
 }
-let transaction = new Transaction();
-transaction.delete(1);
-transaction.getAll().then(data => {
-    console.log(data);
+class UI {
+    constructor() {
+        this.category = new CategoryDataAccess();
+        this.transaction = new TransactionDataAccess();
+    }
+    displayCategories(data) {
+        let tbody = document.getElementById('catList');
+        tbody.innerHTML = '';
+        data.forEach((category) => {
+            let tr = tbody.insertRow();
+            let td1 = tr.insertCell(0);
+            let textDiv = document.createElement('div');
+            textDiv.appendChild(document.createTextNode(category.name));
+            td1.appendChild(textDiv);
+            let td2 = tr.insertCell(1);
+            let textDiv2 = document.createElement('div');
+            textDiv2.appendChild(document.createTextNode(category.description));
+            td2.appendChild(textDiv2);
+        });
+    }
+}
+let ui = new UI();
+ui.category.initArray().then((data) => {
+    ui.displayCategories(data);
 });
 //# sourceMappingURL=app.js.map
