@@ -40,11 +40,32 @@ namespace Budget.WillowBear.Controllers
 
         // GET: api/Category/{id}
         //
-        [HttpGet("{id}")]
+        [Route("{id:int}")]
         public async Task<ActionResult<CategoryDTO?>> GetCategoryById(int id)
         {
             // Attempt to find category by id and convert to DTO
             CategoryDTO? category = await _context.Categories.Where(c => c.Id == id).Select(c => new CategoryDTO
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+            }).FirstOrDefaultAsync();
+
+            // Check if category is null
+            if (category == null)
+            {
+                return NotFound("Category not found in Database");
+            }
+
+            return category;
+        }
+
+        //get by name
+        [Route("{name}")]
+        public async Task<ActionResult<CategoryDTO?>> GetCategoryByName(string name)
+        {
+            // Attempt to find category by id and convert to DTO
+            CategoryDTO? category = await _context.Categories.Where(c => c.Name == name).Select(c => new CategoryDTO
             {
                 Id = c.Id,
                 Name = c.Name,
@@ -65,9 +86,16 @@ namespace Budget.WillowBear.Controllers
         //
         [HttpPost]
         [Route("create")]
-        public async Task<IActionResult> AddCategory(Category category)
+        public async Task<IActionResult> AddCategory(CategoryDTO category)
         {
-            await _context.Categories.AddAsync(category);
+            var newCategory = new Category
+            {
+                Name = category.Name,
+                Description = category.Description,
+            };
+
+
+            await _context.Categories.AddAsync(newCategory);
             await _context.SaveChangesAsync();
             return Ok();
         }

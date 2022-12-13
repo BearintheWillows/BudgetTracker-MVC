@@ -13,6 +13,9 @@ namespace Budget.WillowBear.Models.DTOs
         public DateTime TransactionDate { get; set; }
         public decimal Amount { get; set; }
         public string? Notes { get; set; }
+
+        public int CategoryId { get; set; }
+
         public CategoryDTO? Category { get; set; }
 
         public TransactionType TransactionType { get; set; }
