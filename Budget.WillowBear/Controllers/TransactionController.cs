@@ -44,7 +44,7 @@ namespace Budget.WillowBear.Controllers
         // GET: api/Transaction/{id}
         //
         [HttpGet("{id}")]
-        public async Task<TransactionDTO?> GetTransactionByIdAsync(int id)
+        public async Task<ActionResult<TransactionDTO?>> GetTransactionByIdAsync(int id)
         {
             // Attempt to find transaction by id and convert to DTO
             TransactionDTO? transaction = await _context.Transactions.Where(t => t.Id == id).Include(t => t.Category).Select(t => new TransactionDTO
@@ -65,8 +65,7 @@ namespace Budget.WillowBear.Controllers
             // Check if transaction is null
             if (transaction == null)
             {
-                Console.WriteLine("Transaction not found");
-                return null;
+                return BadRequest("Transaction not found");
             }
 
             return transaction;
@@ -94,11 +93,11 @@ namespace Budget.WillowBear.Controllers
             if (_context.Categories.Any(c => c.Id == transaction.CategoryId))
             {
                 newTransaction.Category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == transaction.CategoryId);
+                newTransaction.CategoryId = transaction.CategoryId;
             }
             else
             {
                 return NotFound("Category not found");
-
             }
 
             try
