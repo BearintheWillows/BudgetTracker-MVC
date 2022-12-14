@@ -204,6 +204,7 @@ class UI {
     }
 }
 let ui = new UI();
+console.log("working");
 ui.category.initArray().then((data) => {
     ui.displayCategories(data);
 });
