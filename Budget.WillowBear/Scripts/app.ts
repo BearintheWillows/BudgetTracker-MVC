@@ -213,6 +213,7 @@ class ElementGenerator {
     transactionTable(transactions: ITransaction[], editId: number) {
         const tBody = document.getElementById('transactionList') as HTMLTableSectionElement;
         const button = document.createElement('button') as HTMLButtonElement;
+
         let editableElement = document.getElementById('editable') as HTMLElement;
 
         tBody.innerHTML = '';
@@ -223,13 +224,22 @@ class ElementGenerator {
             } else {
                 let editButton = button.cloneNode(false) as HTMLButtonElement;
                 editButton.classList.add('btn', 'btn-primary', 'btn-sm');
+                editButton.textContent = 'Edit';
                 //TODO Implement Edit Functionality
                 // editButton.setAttribute('onclick', `editTransaction(${transaction.id})`);
 
                 let deleteButton = button.cloneNode(false) as HTMLButtonElement;
                 deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
+                deleteButton.textContent = 'Delete';
                 //TODO Implement Delete Functionality
                 // deleteButton.setAttribute('onclick', `deleteTransaction(${transaction.id})`);
+
+                const buttonDiv = document.createElement('div') as HTMLDivElement;
+                buttonDiv.classList.add('functionButtons')
+                buttonDiv.appendChild(editButton);
+                buttonDiv.appendChild(deleteButton);
+                // buttonDiv.style.display = 'none'; //TODO Remove this comment
+
 
                 let tr = tBody.insertRow();
 
@@ -244,6 +254,8 @@ class ElementGenerator {
 
                 let td4 = tr.insertCell(3);
                 td4.appendChild(this.categoryPillGenerator(transaction.category));
+
+                tr.appendChild(buttonDiv);
             }
         });
     }

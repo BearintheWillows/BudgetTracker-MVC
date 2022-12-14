@@ -214,12 +214,19 @@ class ElementGenerator {
             else {
                 let editButton = button.cloneNode(false);
                 editButton.classList.add('btn', 'btn-primary', 'btn-sm');
+                editButton.textContent = 'Edit';
                 //TODO Implement Edit Functionality
                 // editButton.setAttribute('onclick', `editTransaction(${transaction.id})`);
                 let deleteButton = button.cloneNode(false);
                 deleteButton.classList.add('btn', 'btn-danger', 'btn-sm');
+                deleteButton.textContent = 'Delete';
                 //TODO Implement Delete Functionality
                 // deleteButton.setAttribute('onclick', `deleteTransaction(${transaction.id})`);
+                const buttonDiv = document.createElement('div');
+                buttonDiv.classList.add('functionButtons');
+                buttonDiv.appendChild(editButton);
+                buttonDiv.appendChild(deleteButton);
+                buttonDiv.style.display = 'none';
                 let tr = tBody.insertRow();
                 let td1 = tr.insertCell(0);
                 td1.appendChild(document.createTextNode(transaction.transactionDate.toString()));
@@ -229,6 +236,7 @@ class ElementGenerator {
                 td3.appendChild(document.createTextNode(transaction.amount.toLocaleString()));
                 let td4 = tr.insertCell(3);
                 td4.appendChild(this.categoryPillGenerator(transaction.category));
+                tr.appendChild(buttonDiv);
             }
         });
     }
