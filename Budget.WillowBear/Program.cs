@@ -1,4 +1,5 @@
 using Budget.WillowBear.Data;
+using Budget.WillowBear.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,16 @@ builder.Services.AddDbContext<BudgetDbContext>(opts =>
 {
     opts.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"]);
     opts.EnableSensitiveDataLogging(true);
+});
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddSingleton<IUriService>(provider =>
+{
+    var accessor = provider.GetRequiredService<IHttpContextAccessor>();
+    var request = accessor.HttpContext.Request;
+    var absoluteUri = string.Concat(request.Scheme, "://", request.Host.ToUriComponent());
+    return new UriService(absoluteUri);
 });
 
 

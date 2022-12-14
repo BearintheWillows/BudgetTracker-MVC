@@ -1,7 +1,11 @@
 
 using Budget.WillowBear.Data;
+using Budget.WillowBear.Filter;
+using Budget.WillowBear.Helpers;
 using Budget.WillowBear.Models;
 using Budget.WillowBear.Models.DTOs;
+using Budget.WillowBear.Services;
+using Budget.WillowBear.Wrappers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,18 +16,22 @@ namespace Budget.WillowBear.Controllers
     public class TransactionController : ControllerBase
     {
         private readonly BudgetDbContext _context;
+        public IUriService UriService { get; }
 
-        public TransactionController(BudgetDbContext context)
+        public TransactionController(BudgetDbContext context, IUriService uriService)
         {
+            this.UriService = uriService;
             _context = context;
         }
 
         // GET: api/Transaction
         //
         [HttpGet]
-        public async Task<IEnumerable<TransactionDTO?>> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] PaginationFilter filter)
         {
-            List<TransactionDTO> transactions = await _context.Transactions.Include(t => t.Category).Select(t => new TransactionDTO
+            var route = Request.Path.Value;
+            var validFilter = new PaginationFilter(filter.PageNumber, filter.PageSize);
+            List<TransactionDTO> pagedData = await _context.Transactions.Include(t => t.Category).Select(t => new TransactionDTO
             {
                 Id = t.Id,
                 TransactionDate = t.TransactionDate,
@@ -36,9 +44,14 @@ namespace Budget.WillowBear.Controllers
                     Description = t.Category.Description,
                 },
                 TransactionType = t.TransactionType
-            }).ToListAsync();
+            })
+            .Skip((validFilter.PageNumber - 1) * validFilter.PageSize)
+            .Take(validFilter.PageSize)
+            .ToListAsync();
 
-            return transactions;
+            var TotalRecords = await _context.Transactions.CountAsync();
+            var pagedReponse = PaginationHelper.CreatePagedReponse(pagedData, validFilter, TotalRecords, UriService, route);
+            return Ok(pagedReponse);
         }
 
         // GET: api/Transaction/{id}
@@ -68,7 +81,7 @@ namespace Budget.WillowBear.Controllers
                 return BadRequest("Transaction not found");
             }
 
-            return transaction;
+            return Ok(new Response<TransactionDTO>(transaction));
         }
 
         // POST: /create
