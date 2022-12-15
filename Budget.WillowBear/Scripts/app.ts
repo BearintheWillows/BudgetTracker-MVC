@@ -15,6 +15,21 @@ interface ICategory {
     description: string;
 }
 
+interface IPaginationResult<T> {
+    data: T[];
+    pageNumber: number;
+    pageSize: number;
+    firstPage: string;
+    lastPage: string;
+    totalPages: number;
+    totalRecords: number;
+    nextPage: string;
+    previousPage: string;
+    succeeded: boolean;
+    message: string;
+    errors: string[];
+}
+
 // Category Class
 class CategoryDataAccess {
 
@@ -115,20 +130,22 @@ class TransactionDataAccess {
 
     }
 
-    transactions: ITransaction[] = [];
+    paginationResult: IPaginationResult<ITransaction>;
+    paginationData: ITransaction[];
     readonly baseUrl: string = '/api/transaction';
 
-    async initArray(): Promise<ITransaction[]> {
-        await (await this.getAll()).forEach(x => this.transactions.push(x));
-
-        return this.transactions;
+    async initArray(): Promise<IPaginationResult<ITransaction>> {
+        var data = await this.getAll();
+        this.paginationData = data.data
+        console.log("pagination" + this.paginationData);
+        return this.paginationResult;
 
     }
 
-    async getAll(): Promise<ITransaction[]> {
-        const response = await fetch(this.baseUrl);
+    async getAll(): Promise<IPaginationResult<ITransaction>> {
+        const response = await fetch(this.baseUrl + '?pageNumber=1&pageSize=2');
         const data = await response.json();
-        this.transactions = data;
+        console.log(data);
         return data;
     }
 
@@ -238,10 +255,18 @@ class ElementGenerator {
                 buttonDiv.classList.add('functionButtons')
                 buttonDiv.appendChild(editButton);
                 buttonDiv.appendChild(deleteButton);
-                // buttonDiv.style.display = 'none'; //TODO Remove this comment
+                buttonDiv.style.visibility = 'hidden';
 
 
                 let tr = tBody.insertRow();
+
+                tr.addEventListener('mouseover', () => {
+                    buttonDiv.style.visibility = 'visible';
+                });
+
+                tr.addEventListener('mouseout', () => {
+                    buttonDiv.style.visibility = 'hidden';
+                });
 
                 let td1 = tr.insertCell(0);
                 td1.appendChild(document.createTextNode(transaction.transactionDate.toString()));
@@ -260,17 +285,65 @@ class ElementGenerator {
         });
     }
 
+    paginationGenerator(paginationResult: IPaginationResult<ITransaction>, data: ITransaction[]): void {
+        let pagination = document.getElementById('pagination') as HTMLDivElement;
+        pagination.innerHTML = '';
+
+        const button = document.createElement('button') as HTMLButtonElement;
+
+        let previousButton = button.cloneNode(false) as HTMLButtonElement;
+        previousButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        previousButton.textContent = 'Previous';
+        previousButton.setAttribute('onclick', `previousPage(${paginationResult.previousPage})`);
+
+        let nextButton = button.cloneNode(false) as HTMLButtonElement;
+        nextButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        nextButton.textContent = 'Next';
+        nextButton.setAttribute('onclick', `nextPage(${paginationResult.nextPage})`);
+
+        let firstButton = button.cloneNode(false) as HTMLButtonElement;
+        firstButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        firstButton.textContent = 'First';
+        firstButton.setAttribute('onclick', `firstPage(${paginationResult.firstPage})`);
+
+        let lastButton = button.cloneNode(false) as HTMLButtonElement;
+        lastButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        lastButton.textContent = 'Last';
+        lastButton.setAttribute('onclick', `lastPage(${paginationResult.lastPage})`);
+
+        let pageButton = button.cloneNode(false) as HTMLButtonElement;
+        pageButton.classList.add('btn', 'btn-primary', 'btn-sm');
+
+        let pageButtonDiv = document.createElement('div') as HTMLDivElement;
+        pageButtonDiv.classList.add('pageButtons');
+
+        for (let i = 0; i < 3; i++) {
+            let pageButtonClone = pageButton.cloneNode(false) as HTMLButtonElement;
+            pageButtonClone.textContent = (i + 1).toString();
+            pageButtonClone.setAttribute('onclick', `page(${i + 1})`);
+            pageButtonDiv.appendChild(pageButtonClone);
+        }
+
+        pagination.appendChild(firstButton);
+        pagination.appendChild(previousButton);
+        pagination.appendChild(pageButtonDiv);
+        pagination.appendChild(nextButton);
+        pagination.appendChild(lastButton);
+
+        this.transactionTable(data, 0);
+
+
+    }
+
     categoryPillGenerator(category: ICategory): HTMLSpanElement {
         let pill = document.createElement('span') as HTMLSpanElement;
         pill.classList.add('badge', 'rounded-pill', 'bg-primary');
         pill.appendChild(document.createTextNode(category.name));
         return pill;
-
     }
 
+
 }
-
-
 
 class UI {
 
@@ -284,20 +357,22 @@ class UI {
         this.transaction = new TransactionDataAccess();
     }
 
-    displayTransactions(data: ITransaction[]): void {
+    async displayTransactions(): Promise<void> {
 
-        this.elementGenerator.transactionTable(data, 0);
+        var result = await this.transaction.getAll();
+        this.elementGenerator.paginationGenerator(result, result.data);
+
+
     }
-
-
 }
 
 let ui = new UI();
 
 console.log("working");
 ui.transaction.initArray().then((data) => {
-    ui.displayTransactions(data);
+    ui.displayTransactions();
 });
+
 
 
 

@@ -105,20 +105,21 @@ class CategoryDataAccess {
 }
 class TransactionDataAccess {
     constructor() {
-        this.transactions = [];
         this.baseUrl = '/api/transaction';
     }
     initArray() {
         return __awaiter(this, void 0, void 0, function* () {
-            yield (yield this.getAll()).forEach(x => this.transactions.push(x));
-            return this.transactions;
+            var data = yield this.getAll();
+            this.paginationData = data.data;
+            console.log("pagination" + this.paginationData);
+            return this.paginationResult;
         });
     }
     getAll() {
         return __awaiter(this, void 0, void 0, function* () {
-            const response = yield fetch(this.baseUrl);
+            const response = yield fetch(this.baseUrl + '?pageNumber=1&pageSize=2');
             const data = yield response.json();
-            this.transactions = data;
+            console.log(data);
             return data;
         });
     }
@@ -226,8 +227,14 @@ class ElementGenerator {
                 buttonDiv.classList.add('functionButtons');
                 buttonDiv.appendChild(editButton);
                 buttonDiv.appendChild(deleteButton);
-                buttonDiv.style.display = 'none';
+                buttonDiv.style.visibility = 'hidden';
                 let tr = tBody.insertRow();
+                tr.addEventListener('mouseover', () => {
+                    buttonDiv.style.visibility = 'visible';
+                });
+                tr.addEventListener('mouseout', () => {
+                    buttonDiv.style.visibility = 'hidden';
+                });
                 let td1 = tr.insertCell(0);
                 td1.appendChild(document.createTextNode(transaction.transactionDate.toString()));
                 let td2 = tr.insertCell(1);
@@ -239,6 +246,43 @@ class ElementGenerator {
                 tr.appendChild(buttonDiv);
             }
         });
+    }
+    paginationGenerator(paginationResult, data) {
+        let pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+        const button = document.createElement('button');
+        let previousButton = button.cloneNode(false);
+        previousButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        previousButton.textContent = 'Previous';
+        previousButton.setAttribute('onclick', `previousPage(${paginationResult.previousPage})`);
+        let nextButton = button.cloneNode(false);
+        nextButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        nextButton.textContent = 'Next';
+        nextButton.setAttribute('onclick', `nextPage(${paginationResult.nextPage})`);
+        let firstButton = button.cloneNode(false);
+        firstButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        firstButton.textContent = 'First';
+        firstButton.setAttribute('onclick', `firstPage(${paginationResult.firstPage})`);
+        let lastButton = button.cloneNode(false);
+        lastButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        lastButton.textContent = 'Last';
+        lastButton.setAttribute('onclick', `lastPage(${paginationResult.lastPage})`);
+        let pageButton = button.cloneNode(false);
+        pageButton.classList.add('btn', 'btn-primary', 'btn-sm');
+        let pageButtonDiv = document.createElement('div');
+        pageButtonDiv.classList.add('pageButtons');
+        for (let i = 0; i < 3; i++) {
+            let pageButtonClone = pageButton.cloneNode(false);
+            pageButtonClone.textContent = (i + 1).toString();
+            pageButtonClone.setAttribute('onclick', `page(${i + 1})`);
+            pageButtonDiv.appendChild(pageButtonClone);
+        }
+        pagination.appendChild(firstButton);
+        pagination.appendChild(previousButton);
+        pagination.appendChild(pageButtonDiv);
+        pagination.appendChild(nextButton);
+        pagination.appendChild(lastButton);
+        this.transactionTable(data, 0);
     }
     categoryPillGenerator(category) {
         let pill = document.createElement('span');
@@ -253,13 +297,16 @@ class UI {
         this.category = new CategoryDataAccess();
         this.transaction = new TransactionDataAccess();
     }
-    displayTransactions(data) {
-        this.elementGenerator.transactionTable(data, 0);
+    displayTransactions() {
+        return __awaiter(this, void 0, void 0, function* () {
+            var result = yield this.transaction.getAll();
+            this.elementGenerator.paginationGenerator(result, result.data);
+        });
     }
 }
 let ui = new UI();
 console.log("working");
 ui.transaction.initArray().then((data) => {
-    ui.displayTransactions(data);
+    ui.displayTransactions();
 });
 //# sourceMappingURL=app.js.map
