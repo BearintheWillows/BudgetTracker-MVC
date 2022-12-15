@@ -41,15 +41,15 @@ class CategoryDataAccess {
     readonly baseUrl: string = '/api/category';
 
     async initArray(): Promise<ICategory[]> {
-        await (await this.getAll()).forEach(x => this.categories.push(x));
+        await (await this.getAll(`${this.baseUrl}?pageNuber=1&pageSize=10`)).forEach(x => this.categories.push(x));
 
         return this.categories;
 
     }
 
     //Get all categories
-    async getAll(): Promise<ICategory[]> {
-        const response = await fetch(this.baseUrl);
+    async getAll(uri: string): Promise<ICategory[]> {
+        const response = await fetch(uri);
         const data = await response.json();
         return data;
     }
@@ -70,7 +70,7 @@ class CategoryDataAccess {
 
     //Create Category
     async create(category: ICategory): Promise<void> {
-        if ((await this.getAll()).find(x => x.name === category.name)) {
+        if ((await this.getAll(this.baseUrl)).find(x => x.name === category.name)) { // TODO Fix URL
             alert("Category already exists");
         } else {
             const response = await fetch(`${this.baseUrl}/create`, {
@@ -83,7 +83,7 @@ class CategoryDataAccess {
             //check if response is ok
             if (response.ok) {
                 console.log("Category created");
-                await this.getAll();
+                await this.getAll(this.baseUrl); //TODO Fix URL
             }
         }
     }
@@ -101,7 +101,7 @@ class CategoryDataAccess {
         // check if response is ok
         if (response.ok) {
             console.log("Category updated");
-            await this.getAll();
+            await this.getAll(this.baseUrl); //TODO Fix URL
         }
     }
 
@@ -109,7 +109,7 @@ class CategoryDataAccess {
     async delete(id: number): Promise<void> {
 
         //check if id is in categories
-        if (!(await this.getAll()).find(x => x.id === id)) {
+        if (!(await this.getAll(this.baseUrl)).find(x => x.id === id)) { //TODO Fix URL
             alert("Category does not exist");
         } else {
             const response = await fetch(`${this.baseUrl}/delete/${id}`, {
@@ -119,7 +119,7 @@ class CategoryDataAccess {
             // check if response is ok
             if (response.ok) {
                 console.log("Category deleted");
-                await this.getAll();
+                await this.getAll(this.baseUrl); //TODO Fix URL
             }
         }
     }
@@ -132,18 +132,18 @@ class TransactionDataAccess {
 
     paginationResult: IPaginationResult<ITransaction>;
     paginationData: ITransaction[];
-    readonly baseUrl: string = '/api/transaction';
+    readonly baseUrl: string = '/api/transaction?pageNumber=1&pageSize=2';
 
     async initArray(): Promise<IPaginationResult<ITransaction>> {
-        var data = await this.getAll();
+        var data = await this.getAll(this.baseUrl);
         this.paginationData = data.data
         console.log("pagination" + this.paginationData);
         return this.paginationResult;
 
     }
 
-    async getAll(): Promise<IPaginationResult<ITransaction>> {
-        const response = await fetch(this.baseUrl + '?pageNumber=1&pageSize=2');
+    async getAll(uri: string): Promise<IPaginationResult<ITransaction>> {
+        const response = await fetch(uri);
         const data = await response.json();
         console.log(data);
         return data;
@@ -173,7 +173,7 @@ class TransactionDataAccess {
 
         if (response.ok) {
             console.log("Transaction created");
-            await this.getAll();
+            await this.getAll(this.baseUrl); //TODO Fix URL
         } else {
             console.log("Transaction not created");
         }
@@ -191,7 +191,7 @@ class TransactionDataAccess {
 
         if (response.ok) {
             console.log("Transaction updated");
-            await this.getAll();
+            await this.getAll(this.baseUrl); //TODO Fix URL
         } else {
             console.log("Transaction not updated");
         }
@@ -204,7 +204,7 @@ class TransactionDataAccess {
 
         if (response.ok) {
             console.log("Transaction deleted");
-            await this.getAll();
+            await this.getAll(this.baseUrl);//TODO Fix URL
         } else {
             console.log("Transaction not deleted");
         }
@@ -286,6 +286,8 @@ class ElementGenerator {
     }
 
     paginationGenerator(paginationResult: IPaginationResult<ITransaction>, data: ITransaction[]): void {
+        console.log(paginationResult);
+        console.log(data);
         let pagination = document.getElementById('pagination') as HTMLDivElement;
         pagination.innerHTML = '';
 
@@ -309,7 +311,9 @@ class ElementGenerator {
         let lastButton = button.cloneNode(false) as HTMLButtonElement;
         lastButton.classList.add('btn', 'btn-primary', 'btn-sm');
         lastButton.textContent = 'Last';
-        lastButton.setAttribute('onclick', `lastPage(${paginationResult.lastPage})`);
+        lastButton.addEventListener('click', () => {
+            this.lastPage(`${paginationResult.lastPage}`);
+        });
 
         let pageButton = button.cloneNode(false) as HTMLButtonElement;
         pageButton.classList.add('btn', 'btn-primary', 'btn-sm');
@@ -331,8 +335,12 @@ class ElementGenerator {
         pagination.appendChild(lastButton);
 
         this.transactionTable(data, 0);
+    }
 
-
+    async lastPage(uri: string): Promise<void> {
+        await this.transactionData.getAll(uri).then((result) => {
+            this.paginationGenerator(result, result.data);
+        });
     }
 
     categoryPillGenerator(category: ICategory): HTMLSpanElement {
@@ -359,7 +367,7 @@ class UI {
 
     async displayTransactions(): Promise<void> {
 
-        var result = await this.transaction.getAll();
+        var result = await this.transaction.getAll(this.transaction.baseUrl); //TODO FIX THIS
         this.elementGenerator.paginationGenerator(result, result.data);
 
 
